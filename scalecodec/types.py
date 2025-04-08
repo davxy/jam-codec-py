@@ -60,15 +60,15 @@ class Compact(ScaleType):
         x = int(value)
         buf = bytearray()
         if x == 0:
-            buf = bytearray(0)
+            buf.append(0)
         else:
             len = next((ll for ll in range(8) if 2**(7 * ll) <= x < 2**(7 * (ll + 1))), None)
             if len is not None:
-                buf.push_byte(int(2**8 - 2**(8 - len) + (x // 2**(8 * len))))
-                buf.write((x % 2**(8 * len)).to_bytes(len, byteorder='little'))
+                buf.append(int(2**8 - 2**(8 - len) + (x // 2**(8 * len))))
+                buf.extend((x % 2**(8 * len)).to_bytes(len, byteorder='little'))
             else:
-                buf.push_byte(int(2**8 - 1))
-                buf.write(x.to_bytes(8, byteorder='little'))
+                buf.append(int(2**8 - 1))
+                buf.extend(x.to_bytes(8, byteorder='little'))
         return ScaleBytes(buf)
 
     @classmethod
