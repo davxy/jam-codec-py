@@ -57,27 +57,19 @@ class Compact(ScaleType):
         return self.process_compact_bytes()
 
     def process_encode(self, value):
-
-        value = int(value)
-
-        if value <= 0b00111111:
-            return ScaleBytes(bytearray(int(value << 2).to_bytes(1, 'little')))
-
-        elif value <= 0b0011111111111111:
-            return ScaleBytes(bytearray(int((value << 2) | 0b01).to_bytes(2, 'little')))
-
-        elif value <= 0b00111111111111111111111111111111:
-
-            return ScaleBytes(bytearray(int((value << 2) | 0b10).to_bytes(4, 'little')))
-
+        x = int(value)
+        buf = bytearray()
+        if x == 0:
+            buf.append(0)
         else:
-            for bytes_length in range(4, 68):
-                if 2 ** (8 * (bytes_length - 1)) <= value < 2 ** (8 * bytes_length):
-                    return ScaleBytes(bytearray(
-                        ((bytes_length - 4) << 2 | 0b11).to_bytes(1, 'little') + value.to_bytes(bytes_length,
-                                                                                                'little')))
+            len = next((ll for ll in range(8) if 2**(7 * ll) <= x < 2**(7 * (ll + 1))), None)
+            if len is not None:
+                buf.append(int(2**8 - 2**(8 - len) + (x // 2**(8 * len))))
+                buf.extend((x % 2**(8 * len)).to_bytes(len, byteorder='little'))
             else:
-                raise ValueError('{} out of range'.format(value))
+                buf.append(int(2**8 - 1))
+                buf.extend(x.to_bytes(8, byteorder='little'))
+        return ScaleBytes(buf)
 
     @classmethod
     def generate_type_decomposition(cls, _recursion_level: int = 0, max_recursion: int = TYPE_DECOMP_MAX_RECURSIVE):
@@ -89,33 +81,7 @@ class Compact(ScaleType):
 
 
 class CompactU32(Compact):
-    """
-    Specialized composite implementation for performance improvement
-    """
-
     type_string = 'Compact<u32>'
-
-    def process(self):
-        return self.process_compact_bytes()
-
-    def process_encode(self, value):
-
-        if value <= 0b00111111:
-            return ScaleBytes(bytearray(int(value << 2).to_bytes(1, 'little')))
-
-        elif value <= 0b0011111111111111:
-            return ScaleBytes(bytearray(int((value << 2) | 0b01).to_bytes(2, 'little')))
-
-        elif value <= 0b00111111111111111111111111111111:
-
-            return ScaleBytes(bytearray(int((value << 2) | 0b10).to_bytes(4, 'little')))
-
-        else:
-            for bytes_length in range(4, 68):
-                if 2 ** (8 * (bytes_length-1)) <= value < 2 ** (8 * bytes_length):
-                    return ScaleBytes(bytearray(((bytes_length - 4) << 2 | 0b11).to_bytes(1, 'little') + value.to_bytes(bytes_length, 'little')))
-            else:
-                raise ValueError('{} out of range'.format(value))
 
 
 class Option(ScaleType):
