@@ -3,7 +3,7 @@ requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "scalecodec"
+name = "jam_codec"
 version = "0.1.0"
 description = "JAM Codec Library"
 readme = "README.md"
